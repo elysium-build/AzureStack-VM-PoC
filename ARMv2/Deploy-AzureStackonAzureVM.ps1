@@ -124,7 +124,8 @@ param
    [Parameter(Mandatory=$false, ParameterSetName='AAD')]
    [ValidateSet(
       "Standard_E32s_v3",
-      "Standard_E48s_v3"
+      "Standard_E48s_v3",
+      "Standard_E48ds_v5"
    )]
    [string]$VirtualMachineSize = "Standard_E32s_v3",
 
@@ -208,12 +209,12 @@ function DownloadWithRetry([string] $Uri, [string] $DownloadLocation, [int] $Ret
 #endregion
     
 #Requires -Version 5
-#Requires -Module @{ ModuleName = 'Az.Accounts'; ModuleVersion = '2.2.1' }, @{ ModuleName = 'Az.Storage'; ModuleVersion = '3.0.0' }, @{ ModuleName = 'Az.Resources'; ModuleVersion = '3.0.1' }
+#Requires -Module @{ ModuleName = 'Az.Accounts'; ModuleVersion = '2.9.1' }, @{ ModuleName = 'Az.Storage'; ModuleVersion = '4.8.0' }, @{ ModuleName = 'Az.Resources'; ModuleVersion = '6.1.0' }
 
 #region variables
 
-$blobFileName = "Cloudbuilder.vhd"
-$sourceUri = "https://azstcenus2.blob.core.windows.net/azsforazure/$blobFileName"
+$blobFileName = "CloudBuilder.vhd"
+$sourceUri = "https://asdkstorageacc.blob.core.windows.net/storage/$blobFileName"
 $templateUri = "https://raw.githubusercontent.com/Azure-Samples/Azure-Stack-Hub-Foundation-Core/master/Tools/ASDKscripts/ASDKAzureVMTemplate.json"
 $sleepTimer = 60
 $container = "asdk"
