@@ -10,17 +10,17 @@ https://github.com/Azure-Samples/Azure-Stack-Hub-Foundation-Core/tree/master/ASF
 
 The current version of the Deploy-AzureStackonAzureVM.ps1 script has been tested with the following versions:
 
-* ASDK build 1.2102.0.9 (2102)
+* ASDK build 1.2206.0.9 (2102)
 
 Starting from  build 2102 the following repository is getting used for ARM template deployment developed by Azure Stack Hub PG.
 
 https://github.com/Azure-Samples/Azure-Stack-Hub-Foundation-Core/tree/master/Tools/ASDKscripts
 
-**IMPORTANT** - this version of the Deploy-AzureStackonAzureVM.ps1 script has been tested with ASDK build 2008 and 2005, and requires minimum of following PowerShell modules
+**IMPORTANT** - this version of the Deploy-AzureStackonAzureVM.ps1 script has been tested with ASDK build 2206 , and requires minimum of following PowerShell modules
 
-* Az.Accounts - (2.2.1)
-* Az.Storage - (3.0.0)
-* Az.Resources - (3.0.1)
+* Az.Accounts - (2.9.1)
+* Az.Storage - (4.8.0)
+* Az.Resources - (6.1.0)
 
 ## Description
 
@@ -30,17 +30,18 @@ Deploy-AzureStackonAzureVM.ps1 script prepares Storage Account and copy VHD file
 
 ### Step 1 - Download the Deploy-AzureStackonAzureVM.ps1 script
 
-Run the following PowerShell command to install the new installation script. This will also downloads required modules from powershell gallery.
+Run the following PowerShell command from within a PowerShell Cloud Shell to download the new installation script.
 
 ```powershell
-Find-Script Deploy-AzureStackonAzureVM | Install-Module -Force
+git clone https://github.com/dmc-tech/AzureStack-VM-PoC.git
+cd ./AzureStack-VM-PoC/ARMv2
 ```
 
 Can be run from Azure Cloudshell as well. :)
 
 ### Step 2 - Run the Deploy-AzureStackonAzureVM.ps1 script
 
-Once script downloaded from PowerShell gallery, run the following command to locate some examples. 
+Once script downloaded from Git Hub, run the following command to locate some examples.
 
 ```powershell
 Get-Help Deploy-AzureStackonAzureVM.ps1 -Examples

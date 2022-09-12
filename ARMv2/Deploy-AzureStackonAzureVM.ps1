@@ -25,16 +25,14 @@
 .EXTERNALSCRIPTDEPENDENCIES 
 
 .RELEASENOTES
-   Author:         Yagmur Sahin
-   Twitter:        @yagmurs
-   Creation Date:  09 July 2021
+   Author:         Danny McDermott
+   Twitter:        @_dmc_tech_
+   Creation Date:  12 September 2022
    Purpose/Change:
-      Fixed some typos.
-      Create new Resource Group if it does not already exist.
-      Fixed blob file case sensitivity issue by providing name in the variable.
-
-      New ARM template used developed by Azure Stack PG
-      https://github.com/Azure-Samples/Azure-Stack-Hub-Foundation-Core/tree/master/Tools/ASDKscripts
+      Use URI for ASDK 2206
+      Check if Storage Account already exists. Skip copy of VHD if blob already exists
+      Add VM Size: Standard_E48ds_v5
+      Change AZ module versions to make it easier to use Cloud Shell
 
 #>
 
@@ -262,7 +260,7 @@ if ($UseExistingStorageAccount)
       }
       else
       {
-         Write-Error "Storage account: $VhdUri is not belongs to the subscription, please specify Storage Account from same subscription" -ErrorAction Stop    
+         Write-Error "Storage account: $VhdUri does not belong to the subscription, please specify Storage Account from same subscription" -ErrorAction Stop    
       }
    }
    else 
@@ -272,90 +270,123 @@ if ($UseExistingStorageAccount)
 }
 else
 {
+   $CreateSA = $true
    #Create new Resource Group if it does not already exist
    if (!(Get-AzResourceGroup -Name $ResourceGroupName -Location $Region -ErrorAction SilentlyContinue))
    {
 	   Write-Verbose -Message "Create Resource Group"
 	   New-AzResourceGroup -Name $ResourceGroupName -Location $Region
    }
-   $i = 0
-   do 
-   {
-      #Randomizing new name for SA and testing for availiability, up to 10 retries.
-      $saName = $saPrefix + (Get-Random)
-      Write-Verbose -Message "Testing Storage Account name availability: $saName"
-      if ($i -gt 10)
-      {
-         Write-Error "Randomization of Storage Account name failed after 10 retries, you may re-run the script to overcome the issue" -ErrorAction Stop
-      }
-   } until ((Get-AzStorageAccountNameAvailability -Name $saName).NameAvailable)
-   
-   Write-Verbose -Message "Creating Storage Account: $saName"
-   $sa = New-AzStorageAccount -Location $Region -ResourceGroupName $ResourceGroupName -SkuName Standard_LRS -Name $saName
-      
-   New-AzStorageContainer -Name $container -Context $sa.context
-   
-   if ($UseAzCopy)
-   {
-      if (-not ($PSCloudShellUtilityModuleInfo))
-      {
-         Write-Verbose -Message "Script is not running on CloudShell"
-         if ($PSVersionTable.PSEdition -eq "Desktop" -or ($PSVersionTable.PSEdition -eq "core" -and $PSVersionTable.platform -like "win*"))
-         {
-            Write-Verbose -Message "Windows OS detected."
-            $azCopyTemp = [System.IO.Path]::GetTempPath()
-            Write-Verbose -Message "Downloading the latest version of AzCopy to $azCopyTemp"
-            $azcopyDestFilePath = Join-Path -Path $azCopyTemp -ChildPath "azcopy.zip"
-            $azcopyDestFolderPath = Join-Path -Path $azCopyTemp -ChildPath "azcopy"
-            DownloadWithRetry -Uri https://aka.ms/downloadazcopy-v10-windows -DownloadLocation $azcopyDestFilePath
-            Write-Verbose -Message "Unblocking AzCopy bits $azcopyDestFolderPath"
-            Unblock-File -Path $azcopyDestFilePath
-            Write-Verbose -Message "Extracting AzCopy bits $azcopyDestFolderPath"
-            Expand-Archive -Path $azcopyDestFilePath -DestinationPath $azcopyDestFolderPath -Force
-            $azCopyExePath = Get-ChildItem -Path $azcopyDestFolderPath -Recurse | Where-Object Name -eq azcopy.exe | Select-Object -ExpandProperty FullName
+   $sa = Get-AzStorageAccount  -ResourceGroupName $ResourceGroupName
+   if ($sa[0].StorageAccountName -match $saprefix) {
+      $saname = $sa[0].StorageAccountName
+      Write-Verbose ('{0} found' -f $saname )
+      $stgcontext = New-AzStorageContext -StorageAccountName $saname
+      $stgcontainer = Get-AzStorageContainer -Context $stgcontext
+      if ($stgcontainer[0].Name -eq $container) {
+         Write-Verbose ('{0} container found' -f $container)
+         $sakey = (Get-AzStorageAccountKey -ResourceGroupName $ResourceGroupName -Name $saname | Where-Object {$_.KeyName -eq "key1"}).Value
+         $Context = New-AzStorageContext -StorageAccountName $saname -StorageAccountKey $sakey
+         $vhdblob = Get-AzStorageBlob -Context $Context -Blob $blobFileName -Container $container
+         if ($vhdblob){
+            Write-Verbose ('{0} already exists in container {1}, storage account {2}' -f $blobFileName, $container, $saname )
+            $CreateSA = $false
+            $osDiskVhdUri = $sa.PrimaryEndpoints.Blob + "$container\$blobFileName"
          }
-         else
+         else {
+            Write-Verbose ('Need to create {0}' -f $blobFileName)
+         }
+      }
+      else {
+         Write-Verbose ('{0} container NOT found' -f $container)
+      }
+   }
+   else {
+      Write-Verbose "Storage Account not found"
+   }
+  
+   if ($CreateSA) {
+      $i = 0
+      do 
+      {
+         #Randomizing new name for SA and testing for availiability, up to 10 retries.
+         $saName = $saPrefix + (Get-Random)
+         Write-Verbose -Message "Testing Storage Account name availability: $saName"
+         if ($i -gt 10)
          {
-            Write-Warning -Message "Non-Windows environment detected. We'll try to call AzCopy if it is in the path. It may fail to call AzCopy. If fails run the script from CloudShell or Windows machine"
+            Write-Error "Randomization of Storage Account name failed after 10 retries, you may re-run the script to overcome the issue" -ErrorAction Stop
+         }
+      } until ((Get-AzStorageAccountNameAvailability -Name $saName).NameAvailable)
+      
+      Write-Verbose -Message "Creating Storage Account: $saName"
+      $sa = New-AzStorageAccount -Location $Region -ResourceGroupName $ResourceGroupName -SkuName Standard_LRS -Name $saName
+         
+      New-AzStorageContainer -Name $container -Context $sa.context
+      
+      if ($UseAzCopy)
+      {
+         if (-not ($PSCloudShellUtilityModuleInfo))
+         {
+            Write-Verbose -Message "Script is not running on CloudShell"
+            if ($PSVersionTable.PSEdition -eq "Desktop" -or ($PSVersionTable.PSEdition -eq "core" -and $PSVersionTable.platform -like "win*"))
+            {
+               Write-Verbose -Message "Windows OS detected."
+               $azCopyTemp = [System.IO.Path]::GetTempPath()
+               Write-Verbose -Message "Downloading the latest version of AzCopy to $azCopyTemp"
+               $azcopyDestFilePath = Join-Path -Path $azCopyTemp -ChildPath "azcopy.zip"
+               $azcopyDestFolderPath = Join-Path -Path $azCopyTemp -ChildPath "azcopy"
+               DownloadWithRetry -Uri https://aka.ms/downloadazcopy-v10-windows -DownloadLocation $azcopyDestFilePath
+               Write-Verbose -Message "Unblocking AzCopy bits $azcopyDestFolderPath"
+               Unblock-File -Path $azcopyDestFilePath
+               Write-Verbose -Message "Extracting AzCopy bits $azcopyDestFolderPath"
+               Expand-Archive -Path $azcopyDestFilePath -DestinationPath $azcopyDestFolderPath -Force
+               $azCopyExePath = Get-ChildItem -Path $azcopyDestFolderPath -Recurse | Where-Object Name -eq azcopy.exe | Select-Object -ExpandProperty FullName
+            }
+            else
+            {
+               Write-Warning -Message "Non-Windows environment detected. We'll try to call AzCopy if it is in the path. It may fail to call AzCopy. If fails run the script from CloudShell or Windows machine"
+               $azCopyExePath = "azcopy"
+            }
+         }
+         else 
+         {
             $azCopyExePath = "azcopy"
          }
+
+         Write-Verbose "`$azCopyExePath is now $azCopyExePath"
+         $sastoken = New-AzStorageContainerSASToken -Context $sa.Context -name $container -Permission racwdl
+         $destination = $sa.Context.BlobEndPoint+$container+$sastoken
+         
+         & $azCopyExePath cp $sourceUri $destination   
+         if($LASTEXITCODE -ne 0){
+            throw "Something went wrong, check AzCopy output or error logs."
+            return
+         }      
       }
-      else 
+      else
       {
-         $azCopyExePath = "azcopy"
-      }
-
-      Write-Verbose "`$azCopyExePath is now $azCopyExePath"
-      $sastoken = New-AzStorageContainerSASToken -Context $sa.Context -name $container -Permission racwdl
-      $destination = $sa.Context.BlobEndPoint+$container+$sastoken
+         Write-Verbose -Message "Starting copy Using Start-AzStorageBlobCopy"
+         Start-AzStorageBlobCopy -AbsoluteUri $sourceUri -DestContainer $container -DestContext $sa.context -DestBlob $blobFileName -ConcurrentTaskCount 100 -Force
       
-      & $azCopyExePath cp $sourceUri $destination   
-      if($LASTEXITCODE -ne 0){
-         throw "Something went wrong, check AzCopy output or error logs."
-         return
-      }      
+         do {
+            Start-Sleep -Seconds $sleepTimer
+            $result = Get-AzStorageAccount -Name $sa.StorageAccountName -ResourceGroupName $ResourceGroupName | Get-AzStorageBlob -Container $container | Get-AzStorageBlobCopyState
+            $remaining = [Math]::Round(($result.TotalBytes - $result.BytesCopied) / 1gb,2)
+            Write-Verbose -Message "Waiting copy to finish remaining $remaining GB"
+            if ($remaining -lt 60)
+            {
+               $sleepTimer = 10
+            }
+         } until ($result.Status -eq "success") 
+      }
+      
+      $osDiskVhdUri = $sa.PrimaryEndpoints.Blob + "$container/$blobFileName"
+      Write-Verbose -Message "Copy completed, new VHD Uri: $osDiskVhdUri"
    }
-   else
-   {
-      Write-Verbose -Message "Starting copy Using Start-AzStorageBlobCopy"
-      Start-AzStorageBlobCopy -AbsoluteUri $sourceUri -DestContainer $container -DestContext $sa.context -DestBlob $blobFileName -ConcurrentTaskCount 100 -Force
-   
-      do {
-         Start-Sleep -Seconds $sleepTimer
-         $result = Get-AzStorageAccount -Name $sa.StorageAccountName -ResourceGroupName $ResourceGroupName | Get-AzStorageBlob -Container $container | Get-AzStorageBlobCopyState
-         $remaining = [Math]::Round(($result.TotalBytes - $result.BytesCopied) / 1gb,2)
-         Write-Verbose -Message "Waiting copy to finish remaining $remaining GB"
-         if ($remaining -lt 60)
-         {
-            $sleepTimer = 10
-         }
-      } until ($result.Status -eq "success") 
+   else {
+      Write-Verbose ('Skipping copy of ASDK VHD as the blob already exists. Delete the blob if you wish to copy it again')
    }
-   
-   $osDiskVhdUri = $sa.PrimaryEndpoints.Blob + "$container\$blobFileName"
 }
-
-Write-Verbose -Message "Copy completed, new VHD Uri: $osDiskVhdUri"
 
 if ($DeploymentType -eq "AAD")
 {
