@@ -140,6 +140,8 @@
 		"addressPrefix": "10.0.0.0/16",
 		"subnetName": "Subnet",
 		"subnetPrefix": "10.0.0.0/24",
+		"bastionSubnetName": "AzureBastionSubnet",
+		"bastionSubnetPrefix": "10.1.0.0/26",
 		"virtualNetworkName": "[concat(parameters('vmName'),'-VNET')]",
 		"subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
 		"networkSecurityGroupName": "[concat(parameters('vmName'),'-NSG')]",
@@ -225,6 +227,12 @@
 							"networkSecurityGroup": {
 								"id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
 							}
+						}
+					},
+					{
+						"name": "[variables('bastionSubnetName')]",
+						"properties": {
+							"addressPrefix": "[variables('bastionSubnetPrefix')]"
 						}
 					}
 				]
