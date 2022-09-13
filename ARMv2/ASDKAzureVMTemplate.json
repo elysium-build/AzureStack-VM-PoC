@@ -141,7 +141,7 @@
 		"subnetName": "Subnet",
 		"subnetPrefix": "10.0.0.0/24",
 		"bastionSubnetName": "AzureBastionSubnet",
-		"bastionSubnetPrefix": "10.1.0.0/26",
+		"bastionSubnetPrefix": "10.0.1.0/26",
 		"virtualNetworkName": "[concat(parameters('vmName'),'-VNET')]",
 		"subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
 		"networkSecurityGroupName": "[concat(parameters('vmName'),'-NSG')]",
