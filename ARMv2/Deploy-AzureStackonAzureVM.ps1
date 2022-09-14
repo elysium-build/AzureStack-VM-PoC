@@ -31,7 +31,6 @@
    Purpose/Change:
       Use URI for ASDK 2206
       Check if Storage Account already exists. Skip copy of VHD if blob already exists
-      Add VM Size: Standard_E48ds_v5
       Change AZ module versions to make it easier to use Cloud Shell
 
 #>
@@ -122,8 +121,7 @@ param
    [Parameter(Mandatory=$false, ParameterSetName='AAD')]
    [ValidateSet(
       "Standard_E32s_v3",
-      "Standard_E48s_v3",
-      "Standard_E48ds_v5"
+      "Standard_E48s_v3"
    )]
    [string]$VirtualMachineSize = "Standard_E32s_v3",
 

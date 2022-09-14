@@ -72,11 +72,10 @@
 		},
 		"vmSize": {
 			"type": "string",
-			"defaultValue": "Standard_E48ds_v5",
+			"defaultValue": "Standard_E32s_v3",
 			"allowedValues": [
 				"Standard_E32s_v3",
-				"Standard_E48s_v3",
-                "Standard_E48ds_v5"
+				"Standard_E48s_v3"
 			],
 			"metadata": {
 				"description": "Size of the virtual machine."
