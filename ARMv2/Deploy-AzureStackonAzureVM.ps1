@@ -278,27 +278,32 @@ else
 	   New-AzResourceGroup -Name $ResourceGroupName -Location $Region
    }
    $sa = Get-AzStorageAccount  -ResourceGroupName $ResourceGroupName
-   if ($sa[0].StorageAccountName -match $saprefix) {
-      $saname = $sa[0].StorageAccountName
-      Write-Verbose ('{0} found' -f $saname )
-      $stgcontext = New-AzStorageContext -StorageAccountName $saname
-      $stgcontainer = Get-AzStorageContainer -Context $stgcontext
-      if ($stgcontainer[0].Name -eq $container) {
-         Write-Verbose ('{0} container found' -f $container)
-         $sakey = (Get-AzStorageAccountKey -ResourceGroupName $ResourceGroupName -Name $saname | Where-Object {$_.KeyName -eq "key1"}).Value
-         $Context = New-AzStorageContext -StorageAccountName $saname -StorageAccountKey $sakey
-         $vhdblob = Get-AzStorageBlob -Context $Context -Blob $blobFileName -Container $container
-         if ($vhdblob){
-            Write-Verbose ('{0} already exists in container {1}, storage account {2}' -f $blobFileName, $container, $saname )
-            $CreateSA = $false
-            $osDiskVhdUri = $sa.PrimaryEndpoints.Blob + "$container\$blobFileName"
+   if ($sa) {
+      if ($sa[0].StorageAccountName -match $saprefix) {
+         $saname = $sa[0].StorageAccountName
+         Write-Verbose ('{0} found' -f $saname )
+         $stgcontext = New-AzStorageContext -StorageAccountName $saname
+         $stgcontainer = Get-AzStorageContainer -Context $stgcontext
+         if ($stgcontainer[0].Name -eq $container) {
+            Write-Verbose ('{0} container found' -f $container)
+            $sakey = (Get-AzStorageAccountKey -ResourceGroupName $ResourceGroupName -Name $saname | Where-Object {$_.KeyName -eq "key1"}).Value
+            $Context = New-AzStorageContext -StorageAccountName $saname -StorageAccountKey $sakey
+            $vhdblob = Get-AzStorageBlob -Context $Context -Blob $blobFileName -Container $container
+            if ($vhdblob){
+               Write-Verbose ('{0} already exists in container {1}, storage account {2}' -f $blobFileName, $container, $saname )
+               $CreateSA = $false
+               $osDiskVhdUri = $sa.PrimaryEndpoints.Blob + "$container\$blobFileName"
+            }
+            else {
+               Write-Verbose ('Need to create {0}' -f $blobFileName)
+            }
          }
          else {
-            Write-Verbose ('Need to create {0}' -f $blobFileName)
+            Write-Verbose ('{0} container NOT found' -f $container)
          }
       }
       else {
-         Write-Verbose ('{0} container NOT found' -f $container)
+         Write-Verbose "Storage Account not found"
       }
    }
    else {
