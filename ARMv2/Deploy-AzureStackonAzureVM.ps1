@@ -27,9 +27,9 @@
 .RELEASENOTES
    Author:         Danny McDermott
    Twitter:        @_dmc_tech_
-   Creation Date:  12 September 2022
+   Creation Date:  06 June 2023
    Purpose/Change:
-      Use URI for ASDK 2206
+      Use URI for ASDK 2301
       Check if Storage Account already exists. Skip copy of VHD if blob already exists
       Change AZ module versions to make it easier to use Cloud Shell
 
@@ -210,7 +210,7 @@ function DownloadWithRetry([string] $Uri, [string] $DownloadLocation, [int] $Ret
 #region variables
 
 $blobFileName = "CloudBuilder.vhd"
-$sourceUri = "https://asdkstorageacc.blob.core.windows.net/storage/$blobFileName"
+$sourceUri = "https://asdkuksdmc.blob.core.windows.net/2301/$blobFileName"
 $templateUri = "https://raw.githubusercontent.com/dmc-tech/AzureStack-VM-PoC/master/ARMv2/ASDKAzureVMTemplate.json"
 $sleepTimer = 60
 $container = "asdk"
