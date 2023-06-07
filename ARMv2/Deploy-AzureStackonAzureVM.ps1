@@ -322,7 +322,7 @@ else
       } until ((Get-AzStorageAccountNameAvailability -Name $saName).NameAvailable)
       
       Write-Verbose -Message "Creating Storage Account: $saName"
-      $sa = New-AzStorageAccount -Location $Region -ResourceGroupName $ResourceGroupName -SkuName Standard_LRS -Name $saName
+      $sa = New-AzStorageAccount -Location $Region -ResourceGroupName $ResourceGroupName -SkuName Standard_LRS -Name $saName -MinimumTlsVersion TLS1_2
          
       New-AzStorageContainer -Name $container -Context $sa.context
       
