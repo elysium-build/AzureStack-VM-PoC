@@ -210,8 +210,8 @@ function DownloadWithRetry([string] $Uri, [string] $DownloadLocation, [int] $Ret
 #region variables
 
 $blobFileName = "Cloudbuilder.vhd"
-$sourceUri = "https://asdkdmc2uks.blob.core.windows.net/2301/$blobFileName"
-$templateUri = "https://raw.githubusercontent.com/dmc-tech/AzureStack-VM-PoC/master/ARMv2/ASDKAzureVMTemplate.json"
+$sourceUri = "https://asdk757288093.blob.core.windows.net/asdk/CloudBuilder.vhd"
+$templateUri = "https://github.com/elysium-build/AzureStack-VM-PoC/edit/master/ARMv2/ASDKAzureVMTemplate.json"
 $sleepTimer = 60
 $container = "asdk"
 $saPrefix = "asdk"
