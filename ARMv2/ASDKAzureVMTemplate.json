@@ -273,11 +273,6 @@
 				"[resourceId('Microsoft.Compute/images/', variables('imageName'))]"
 			],
 			"properties": {
-				"priority": "Spot",
-                "evictionPolicy": "Deallocate",
-                "billingProfile": {
-                    "maxPrice": -1
-                },
 				"hardwareProfile": {
 					"vmSize": "[parameters('vmSize')]"
 				},
@@ -302,7 +297,7 @@
 						"managedDisk": {
 							"storageAccountType": "Premium_LRS"
 						},
-						"diskSizeGB": 256
+						"diskSizeGB": 1024
 					},
 					"copy": [
 						{
@@ -310,7 +305,7 @@
 							"count": "[parameters('numDataDisks')]",
 							"input": {
 								"caching": "ReadWrite",
-								"diskSizeGB": 256,
+								"diskSizeGB": 1024,
 								"lun": "[copyIndex('dataDisks')]",
 								"name": "[concat(parameters('vmName'), '-datadisk', copyIndex('dataDisks'))]",
 								"createOption": "Empty"
