@@ -444,4 +444,7 @@ else
 }
 
 Write-Verbose -Message "Starting VM deployment by calling ARM template with parameters provided"
-New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name AzureStackonAzureVM -TemplateUri $templateUri -TemplateParameterObject $templateParameterObject
+New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
+   -Name AzureStackonAzureVM `
+   -TemplateUri $templateUri `
+   -TemplateParameterObject $templateParameterObject
